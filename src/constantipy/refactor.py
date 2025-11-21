@@ -150,7 +150,8 @@ def _remove_redundant_locals(lines: List[str], imported_names: Set[str]) -> bool
             # Check for simple assignment pattern "NAME ="
             if line.startswith(f"{name} =") or line.startswith(f"{name}="):
                 # Ensure it's a top-level assignment or simple assignment
-                # This is a heuristic; precise AST matching on modified code is hard without re-parsing.
+                # This is a heuristic; precise AST matching on modified code
+                # is hard without re-parsing.
                 lines.pop(i)
                 modified = True
                 break
@@ -183,6 +184,21 @@ def _process_single_file(
 
     original_lines = lines[:]
 
+    changed = _apply_changes(lines, replacements, new_locals, config, content)
+
+    if not changed:
+        return False, [], []
+
+    return True, original_lines, lines
+
+
+def _apply_changes(
+    lines: List[str],
+    replacements: List[Dict[str, Any]],
+    new_locals: List[Tuple[str, Any]],
+    config: Config,
+    content: str,
+) -> bool:
     # Sort replacements reverse order to not mess up indices
     replacements.sort(key=lambda x: (x["start_line"], x["start_col"]), reverse=True)
 
@@ -212,10 +228,7 @@ def _process_single_file(
             lines.insert(insert_idx, line)
         inserted_locals = True
 
-    if not (replaced or imported or inserted_locals or removed_locals):
-        return False, [], []
-
-    return True, original_lines, lines
+    return replaced or imported or inserted_locals or removed_locals
 
 
 def _handle_global_constants(
