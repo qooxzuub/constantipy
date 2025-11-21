@@ -3,9 +3,9 @@ Orchestration logic for scanning the codebase and generating the report.
 """
 
 import os
-from collections import defaultdict, Counter
+from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Any, Set, Tuple, List
+from typing import Dict, Any, Set, Tuple, List, Counter
 from constantipy.common import Config, eprint
 from constantipy.loader import load_all_constants
 from constantipy.scanner import scan_file
