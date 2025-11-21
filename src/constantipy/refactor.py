@@ -7,7 +7,7 @@ import sys
 import difflib
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Set
 from constantipy.exceptions import ConstantipyError
 from constantipy.common import Config, eprint
 
@@ -68,7 +68,6 @@ def _apply_replacements(lines: List[str], replacements: List[Dict[str, Any]]) ->
     """
     modified = False
     for rep in replacements:
-        # --- FIX: Idempotency Check ---
         # If the constant we are inserting (rep['name']) matches the variable
         # that this literal is defining (rep['definition_of']), skip replacement.
         # This prevents 'MAGIC = MAGIC' assignments.
@@ -103,15 +102,69 @@ def _apply_replacements(lines: List[str], replacements: List[Dict[str, Any]]) ->
     return modified
 
 
+def _insert_global_imports(
+    lines: List[str], replacements: List[Dict[str, Any]], config: Config, content: str
+) -> Tuple[bool, Set[str]]:
+    """
+    Identifies used global constants and inserts an import statement if needed.
+    Returns (modified_bool, set_of_imported_names).
+    """
+    used_globals: Set[str] = set()
+    for rep in replacements:
+        if rep.get("scope") == "global":
+            used_globals.add(rep["name"])
+
+    if not used_globals:
+        return False, set()
+
+    module_name = config.target_file.rsplit(".", 1)[0]
+    names_str = ", ".join(sorted(used_globals))
+    import_stmt = f"from {module_name} import {names_str}\n"
+
+    # Check if already imported to avoid duplication (naive check)
+    for line in lines:
+        if import_stmt.strip() in line:
+            return False, used_globals
+
+    insert_idx = find_insertion_line(content)
+    lines.insert(insert_idx, import_stmt)
+    return True, used_globals
+
+
+def _remove_redundant_locals(lines: List[str], imported_names: Set[str]) -> bool:
+    """
+    Removes local definitions (e.g. 'MAGIC = ...') if 'MAGIC' is now imported globally.
+    """
+    if not imported_names:
+        return False
+
+    modified = False
+    # Naive line-by-line check. Ideally we would use AST to find assignment nodes,
+    # but we are working with a list of strings that might already be modified.
+    # We scan for lines starting with "NAME =" matching imported names.
+
+    # Iterate backwards to safely remove lines
+    for i in range(len(lines) - 1, -1, -1):
+        line = lines[i].strip()
+        for name in imported_names:
+            # Check for simple assignment pattern "NAME ="
+            if line.startswith(f"{name} =") or line.startswith(f"{name}="):
+                # Ensure it's a top-level assignment or simple assignment
+                # This is a heuristic; precise AST matching on modified code is hard without re-parsing.
+                lines.pop(i)
+                modified = True
+                break
+    return modified
+
+
 def _process_single_file(
     file_path: str,
     replacements: List[Dict[str, Any]],
     new_locals: List[Tuple[str, Any]],
-    # pylint: disable=unused-argument
     config: Config,
 ) -> Tuple[bool, List[str], List[str]]:
     """
-    Reads a file, applies replacements and inserts local definitions.
+    Reads a file, applies replacements, inserts imports, and inserts local definitions.
     Returns (modified_flag, original_lines, new_lines).
     """
     path_obj = Path(file_path)
@@ -124,7 +177,7 @@ def _process_single_file(
 
     lines = content.splitlines(keepends=True)
 
-    # --- FIX: Ensure file ends with newline for clean diffs ---
+    # Ensure file ends with newline for clean diffs
     if lines and not lines[-1].endswith("\n"):
         lines[-1] += "\n"
 
@@ -134,18 +187,32 @@ def _process_single_file(
     replacements.sort(key=lambda x: (x["start_line"], x["start_col"]), reverse=True)
 
     # 1. Apply Replacements
-    modified = _apply_replacements(lines, replacements)
+    replaced = _apply_replacements(lines, replacements)
 
-    # 2. Insert locals
+    # 2. Insert Global Imports
+    imported, imported_names = _insert_global_imports(
+        lines, replacements, config, content
+    )
+
+    # 3. Remove Redundant Locals (Promotion cleanup)
+    removed_locals = False
+    if imported_names:
+        removed_locals = _remove_redundant_locals(lines, imported_names)
+
+    # 4. Insert locals
+    inserted_locals = False
     if new_locals:
         insert_idx = find_insertion_line(content)
-        local_defs = [f"{n} = {repr(v)}\n" for n, v in new_locals]
+        # If imports inserted, list grew by 1.
+        if imported:
+            insert_idx += 1
 
+        local_defs = [f"{n} = {repr(v)}\n" for n, v in new_locals]
         for line in reversed(local_defs):
             lines.insert(insert_idx, line)
-        modified = True
+        inserted_locals = True
 
-    if not modified:
+    if not (replaced or imported or inserted_locals or removed_locals):
         return False, [], []
 
     return True, original_lines, lines
