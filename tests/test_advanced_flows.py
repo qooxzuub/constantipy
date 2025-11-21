@@ -20,7 +20,7 @@ def test_diff_no_trailing_newline(tmp_path, capsys, simple_report_maker):
     args = MockArgs(path=d)
     config = Config(args)
 
-    # Create a report forcing a replacement
+    # Use fixture
     report = simple_report_maker(f, "MAGIC", "magic")
 
     process_report(config, report, apply=False)
@@ -28,6 +28,7 @@ def test_diff_no_trailing_newline(tmp_path, capsys, simple_report_maker):
     captured = capsys.readouterr()
     diff = captured.out
 
+    # diff should now clearly show change
     assert "-x = 'magic'" in diff
     assert "+x = MAGIC" in diff
 
@@ -47,6 +48,7 @@ def test_diff_patch_compatibility(tmp_path, capsys, simple_report_maker):
     args = MockArgs(path=d)
     config = Config(args)
 
+    # Use fixture
     report = simple_report_maker(f, "MAGIC", "magic")
 
     process_report(config, report, apply=False)

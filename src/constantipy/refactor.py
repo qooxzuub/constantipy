@@ -56,7 +56,6 @@ def find_insertion_line(source_code: str) -> int:
     doc = ast.get_docstring(tree, clean=False)
     if doc and tree.body and isinstance(tree.body[0], ast.Expr):
         end = tree.body[0].end_lineno or 0
-        # Use max as preferred by user
         insert = max(insert, end)
 
     return insert
@@ -124,6 +123,11 @@ def _process_single_file(
         return False, [], []
 
     lines = content.splitlines(keepends=True)
+
+    # --- FIX: Ensure file ends with newline for clean diffs ---
+    if lines and not lines[-1].endswith("\n"):
+        lines[-1] += "\n"
+
     original_lines = lines[:]
 
     # Sort replacements reverse order to not mess up indices

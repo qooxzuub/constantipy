@@ -1,4 +1,6 @@
-"""Tests for the CLI module"""
+"""
+Unit tests for the CLI module.
+"""
 
 import sys
 import json
@@ -14,7 +16,10 @@ from .mock_args import MockArgs
 def test_main_report_command(tmp_path, capsys):
     """Test 'report' subcommand outputs JSON to stdout."""
     d = tmp_path
+    # Create a file with a string > min_length(4)
     (d / "t.py").write_text('x="magic_string"\ny="magic_string"', encoding="utf-8")
+
+    # Argparse strict order: global flags BEFORE subcommand
     test_args = ["constantipy", "--path", str(d), "report"]
 
     with patch.object(sys, "argv", test_args):
@@ -22,7 +27,7 @@ def test_main_report_command(tmp_path, capsys):
 
     captured = capsys.readouterr()
     data = json.loads(captured.out)
-    # --- FIX: Expect MAGIC_STRING, not STR_MAGIC_STRING ---
+    # Expect heuristic name (no STR_ prefix for valid identifiers)
     assert "MAGIC_STRING" in data
 
 
@@ -68,7 +73,6 @@ def test_main_implicit_flow_apply(tmp_path):
     with patch.object(sys, "argv", test_args):
         main()
 
-    # --- FIX: Expect MAGIC, not STR_MAGIC ---
     assert "MAGIC" in (d / "t.py").read_text(encoding="utf-8")
 
 
