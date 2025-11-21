@@ -1,0 +1,11 @@
+[run]
+omit = 
+    tests/*
+    venv/*
+
+[report]
+exclude_lines =
+    if __name__ == .__main__.:
+    pragma: no cover
+    except OSError:
+    except (SyntaxError, UnicodeDecodeError):

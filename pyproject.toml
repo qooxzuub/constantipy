@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "constantipy"
+version = "0.1.0"
+description = "A tool to refactor magic strings and other magic constants into named constants."
+readme = "README.md"
+authors = [
+  { name="The Constantipy Authors", email="154452450+qooxzuub@users.noreply.github.com" },
+]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.scripts]
+constantipy = "constantipy.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/qooxzuub/constantipy"
+"Bug Tracker" = "https://github.com/qooxzuub/constantipy/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
