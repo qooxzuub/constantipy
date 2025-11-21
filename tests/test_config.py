@@ -1,32 +1,16 @@
-import pytest
+"""Test config from the common module"""
 import argparse
+import pytest
 from constantipy.common import Config
-
+from .mock_args import MockArgs
 
 def make_args(**kwargs):
-    """Helper to create a valid argparse Namespace with default values."""
-    defaults = {
-        "path": ".",
-        "min_length": 4,
-        "min_count": 2,
-        "mode": "scan",
-        "report_file": "report.json",
-        "naming": "derived",
-        "constants_file": "constants.py",
-        "extra_constants": [],
-        "no_local_scope": False,
-        "no_numbers": False,
-        "no_ints": False,
-        "no_floats": False,
-        "no_bytes": False,
-        "ignore_call": [],
-        "exclude": [],
-        "ignore_num": [],
-        "include_num": [],
-        "ignore_str": [],
-    }
-    defaults.update(kwargs)
-    return argparse.Namespace(**defaults)
+    """
+    Helper to create a valid argparse Namespace using MockArgs defaults.
+    """
+    mock = MockArgs(**kwargs)
+    # We convert the MockArgs object (which has attributes) into a Namespace
+    return argparse.Namespace(**mock.__dict__)
 
 
 def test_config_invalid_argument():

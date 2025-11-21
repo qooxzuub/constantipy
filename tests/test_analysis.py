@@ -1,4 +1,5 @@
-import pytest
+# pylint: disable=protected-access
+"""Tests for the analysis module"""
 import argparse
 from constantipy.common import Config
 from constantipy.analysis import RefactoringSession
@@ -43,9 +44,11 @@ def test_name_collision_resolution():
     assert result == "MY_CONST_3"
 
     # 2. Second Attempt (Simulate usage tracker incrementing)
-    # If we try to use MY_CONST_3 again (e.g. another value generated the same name),
-    # the name_tracker should force it to _4
-    session.name_tracker["MY_CONST_3"] += 1
+    # If we try to use MY_CONST again, the name_tracker for MY_CONST should be incremented
+    session.name_tracker["MY_CONST"] = 3  # Last used suffix was 3
+
+    # NOTE: The logic inside _resolve_collision checks name_tracker[base_name]
+    # If name_tracker["MY_CONST"] is 3, it starts trying at _4.
     result_next = session._resolve_collision("MY_CONST", blocked_names)
     assert result_next == "MY_CONST_4"
 

@@ -1,43 +1,13 @@
+"""Tests for the CLI module"""
 import sys
 import json
-import pytest
 import io
 from unittest.mock import patch
+import pytest
 from constantipy.exceptions import ConstantipyError
 from constantipy.cli import main, handle_validate
 from constantipy.common import Config
-
-
-class MockArgs:
-    """Mock args for config creation."""
-
-    def __init__(self, path, **kwargs):
-        self.path = str(path)
-        self.constants_file = "constants.py"
-        self.min_length = 3
-        self.min_count = 1
-        defaults = {
-            "no_local_scope": False,
-            "no_numbers": False,
-            "no_ints": False,
-            "no_floats": False,
-            "no_bytes": False,
-            "ignore_call": [],
-            "exclude": [],
-            "ignore_num": [],
-            "include_num": [],
-            "ignore_str": [],
-            "extra_constants": [],
-            "naming": "derived",
-        }
-        for k, v in defaults.items():
-            setattr(self, k, v)
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-        if not hasattr(self, "constants_path"):
-            from pathlib import Path
-
-            self.constants_path = Path(self.path) / self.constants_file
+from .mock_args import MockArgs
 
 
 def test_main_report_command(tmp_path, capsys):
@@ -55,7 +25,7 @@ def test_main_report_command(tmp_path, capsys):
     assert "MAGIC_STRING" in data
 
 
-def test_main_refactor_stdin(tmp_path, capsys):
+def test_main_refactor_stdin(tmp_path):
     """Test 'refactor' subcommand reading from stdin."""
     d = tmp_path
     t_file = d / "t.py"
@@ -116,7 +86,7 @@ def test_apply_report_preview_mode(tmp_path, capsys):
     assert '"preview"' in (d / "t.py").read_text(encoding="utf-8")
 
 
-def test_main_invalid_json(tmp_path, capsys):
+def test_main_invalid_json(capsys):
     """Test that invalid JSON input is properly handled."""
     bad_json = "{ bad json"
     test_args = ["constantipy", "refactor"]
@@ -131,7 +101,7 @@ def test_main_invalid_json(tmp_path, capsys):
     assert "Invalid JSON" in captured.err
 
 
-def test_main_report_invalid_config(tmp_path, capsys):
+def test_main_report_invalid_config(tmp_path):
     """Test invalid config passed to report command."""
     d = tmp_path
     # Force min-length to 0 to trigger ValueError in Config

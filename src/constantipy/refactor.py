@@ -56,6 +56,7 @@ def find_insertion_line(source_code: str) -> int:
     doc = ast.get_docstring(tree, clean=False)
     if doc and tree.body and isinstance(tree.body[0], ast.Expr):
         end = tree.body[0].end_lineno or 0
+        # Use max as preferred by user
         insert = max(insert, end)
 
     return insert
@@ -68,6 +69,13 @@ def _apply_replacements(lines: List[str], replacements: List[Dict[str, Any]]) ->
     """
     modified = False
     for rep in replacements:
+        # --- FIX: Idempotency Check ---
+        # If the constant we are inserting (rep['name']) matches the variable
+        # that this literal is defining (rep['definition_of']), skip replacement.
+        # This prevents 'MAGIC = MAGIC' assignments.
+        if rep.get("definition_of") == rep["name"]:
+            continue
+
         s_line = rep["start_line"] - 1
         s_col = rep["start_col"]
         e_line = rep["end_line"] - 1
@@ -199,6 +207,8 @@ def _parse_occurrences(
                     "start_col": occ["col_offset"],
                     "end_line": occ["end_lineno"],
                     "end_col": occ["end_col_offset"],
+                    # Pass definition info for idempotency checks
+                    "definition_of": occ.get("definition_of"),
                 }
             )
     return rep_map, loc_map
@@ -230,11 +240,18 @@ def process_report(config: Config, report: Dict[str, Any], apply: bool = False) 
                     f.writelines(new_lines)
                 eprint(f"Refactored {fp}")
             else:
+                # Calculate relative path for diff header
+                try:
+                    rel_path = Path(fp).relative_to(config.root)
+                except ValueError:
+                    rel_path = Path(fp).name
+
+                # Print diff to stdout
                 sys.stdout.writelines(
                     difflib.unified_diff(
                         original,
                         new_lines,
-                        fromfile=f"a/{Path(fp).name}",
-                        tofile=f"b/{Path(fp).name}",
+                        fromfile=f"a/{rel_path}",
+                        tofile=f"b/{rel_path}",
                     )
                 )

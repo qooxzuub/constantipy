@@ -1,7 +1,9 @@
-import pytest
-import ast
-from unittest import mock
+"""
+Unit tests for the refactor module.
+"""
 from pathlib import Path
+from unittest import mock
+import pytest
 from constantipy.refactor import (
     process_report,
     find_insertion_line,
@@ -9,60 +11,34 @@ from constantipy.refactor import (
 )
 from constantipy.exceptions import ConstantipyError
 from constantipy.common import Config
-
-
-class MockArgs:
-    """Helper for creating config objects."""
-
-    def __init__(self, path, **kwargs):
-        self.path = str(path)
-        self.constants_file = "constants.py"
-        self.min_length = 3
-        self.min_count = 1
-        # Set defaults
-        defaults = {
-            "no_local_scope": False,
-            "no_numbers": False,
-            "no_ints": False,
-            "no_floats": False,
-            "no_bytes": False,
-            "ignore_call": [],
-            "exclude": [],
-            "ignore_num": [],
-            "include_num": [],
-            "ignore_str": [],
-            "extra_constants": [],
-            "naming": "derived",
-        }
-        for k, v in defaults.items():
-            setattr(self, k, v)
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-        if not hasattr(self, "constants_path"):
-            self.constants_path = Path(self.path) / self.constants_file
+from .mock_args import MockArgs
 
 
 # --- Insertion Logic Tests ---
 
 
 def test_find_insertion_line_shebang():
+    """Check find_insertion_line copes with shebang"""
     code = "#!/usr/bin/env python\nx = 1"
     assert find_insertion_line(code) == 1
 
 
 def test_find_insertion_line_imports():
+    """Check find_insertion_line copes with imports"""
     code = "import os\nimport sys\n\nx = 1"
     # Should insert after imports (line 2)
     assert find_insertion_line(code) == 2
 
 
 def test_find_insertion_line_docstring():
+    """Check find_insertion_line copes with a docstring then an import"""
     code = '"""Docstring"""\nimport os'
     # Should be after import (line 2)
     assert find_insertion_line(code) == 2
 
 
 def test_find_insertion_line_docstring_only():
+    """Check find_insertion_line copes with a docstring only"""
     code = '"""Docstring"""\n'
     # Should be after docstring (line 1)
     assert find_insertion_line(code) == 1
@@ -78,7 +54,7 @@ def test_get_import_module_path_error():
 # --- Report Processing Tests ---
 
 
-def test_process_report_file_read_error(tmp_path, capsys):
+def test_process_report_file_read_error(tmp_path, capsys, simple_report_maker):
     """Test that file read errors during refactor are handled gracefully."""
     bad_file = tmp_path / "locked_file.py"
     bad_file.write_text("x='foo'", encoding="utf-8")
@@ -86,23 +62,7 @@ def test_process_report_file_read_error(tmp_path, capsys):
     args = MockArgs(path=tmp_path)
     config = Config(args)
 
-    report = {
-        "CONST_FOO": {
-            "value": "foo",
-            "is_new": True,
-            "scope": "local",
-            "source_path": str(bad_file),
-            "occurrences": [
-                {
-                    "filepath": str(bad_file),
-                    "lineno": 1,
-                    "col_offset": 2,
-                    "end_lineno": 1,
-                    "end_col_offset": 5,
-                }
-            ],
-        }
-    }
+    report = simple_report_maker(bad_file, "CONST_FOO", "foo")
 
     with mock.patch("builtins.open", side_effect=OSError("Permission denied")):
         process_report(config, report, apply=True)
@@ -111,7 +71,7 @@ def test_process_report_file_read_error(tmp_path, capsys):
     assert f"Error reading {bad_file}" in captured.err
 
 
-def test_process_report_malformed_report(tmp_path, capsys):
+def test_process_report_malformed_report(tmp_path):
     """Test that malformed reports are handled correctly."""
     args = MockArgs(path=tmp_path)
     config = Config(args)
@@ -131,7 +91,7 @@ def test_process_report_malformed_report(tmp_path, capsys):
             process_report(config, report, apply=True)
 
 
-def test_process_report_missing_key(tmp_path, capsys):
+def test_process_report_missing_key(tmp_path):
     """Test that missing keys in the report raise an appropriate error."""
     args = MockArgs(path=tmp_path)
     config = Config(args)
@@ -151,7 +111,7 @@ def test_process_report_missing_key(tmp_path, capsys):
             process_report(config, report, apply=True)
 
 
-def test_process_report_append_newline(tmp_path):
+def test_process_report_append_newline(tmp_path, simple_report_maker):
     """Test that process_report adds a newline if the constants file lacks one."""
     d = tmp_path
     const_file = d / "constants.py"
@@ -161,15 +121,7 @@ def test_process_report_append_newline(tmp_path):
     args = MockArgs(path=d)
     config = Config(args)
 
-    report = {
-        "NEW_CONST": {
-            "value": "val",
-            "is_new": True,
-            "scope": "global",
-            "source_path": str(const_file),
-            "occurrences": [],
-        }
-    }
+    report = simple_report_maker(const_file, "NEW_CONST", "val")
 
     process_report(config, report, apply=True)
 

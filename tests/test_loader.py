@@ -1,4 +1,4 @@
-import pytest
+"""Tests for the loader module."""
 from constantipy.loader import load_all_constants
 
 
@@ -10,7 +10,7 @@ def test_loader_syntax_error(tmp_path):
 
     # Should not raise exception
     consts, defined = load_all_constants(bad_file, [])
-    assert consts == {}
+    assert not consts
     assert defined == set()
 
 
@@ -20,9 +20,9 @@ def test_loader_complex_assignments(tmp_path):
     f = d / "constants.py"
     f.write_text("x, y = 1, 2\nz = [1, 2]\nw = func()", encoding="utf-8")
 
-    consts, defined = load_all_constants(f, [])
+    consts, _ = load_all_constants(f, [])
     # None of these are simple constant assignments
-    assert consts == {}
+    assert not consts
 
 
 def test_loader_valid_constants(tmp_path):

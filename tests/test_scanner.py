@@ -1,39 +1,9 @@
-import pytest
-from pathlib import Path
+"""
+Unit tests for the scanner module.
+"""
 from constantipy.scanner import scan_file
 from constantipy.common import Config
-
-
-class MockArgs:
-    """Helper for creating config objects with defaults."""
-
-    def __init__(self, path, **kwargs):
-        self.path = str(path)
-        self.constants_file = "constants.py"
-        self.min_length = 3
-        # min_count must be > 0 to pass Config validation
-        self.min_count = 1
-        self.no_local_scope = False
-        self.no_numbers = False
-        self.no_ints = False
-        self.no_floats = False
-        self.no_bytes = False
-        self.scan_ints = True
-        self.scan_floats = True
-        self.scan_bytes = True
-        self.ignore_call = []
-        self.exclude = []
-        self.ignore_num = []
-        self.include_num = []
-        self.ignore_str = []
-        self.extra_constants = []
-
-        # Apply overrides
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-        if not hasattr(self, "constants_path"):
-            self.constants_path = Path(self.path) / self.constants_file
+from .mock_args import MockArgs
 
 
 # --- Basic Scanner Tests ---
@@ -245,7 +215,7 @@ def test_scanner_ignores_docstrings(tmp_path):
 
     found, _ = scan_file(f, config)
     # Should be empty because both strings are docstrings
-    assert found == []
+    assert not found
 
 
 def test_scanner_ignored_calls(tmp_path):

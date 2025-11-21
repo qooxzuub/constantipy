@@ -1,37 +1,8 @@
+"""Integration tests"""
 from constantipy.common import Config
 from constantipy.analysis import analyze_codebase
 from constantipy.refactor import process_report
-from pathlib import Path
-
-
-class MockArgs:
-    def __init__(self, path, **kwargs):
-        self.path = str(path)
-        self.constants_file = "constants.py"
-        self.min_length = 3
-        self.min_count = 1
-        defaults = {
-            "no_local_scope": False,
-            "no_numbers": False,
-            "no_ints": False,
-            "no_floats": False,
-            "no_bytes": False,
-            "ignore_call": [],
-            "exclude": [],
-            "ignore_num": [],
-            "include_num": [],
-            "ignore_str": [],
-            "extra_constants": [],
-            "naming": "derived",
-            "mode": "scan",
-            "report_file": "report.json",
-        }
-        for k, v in defaults.items():
-            setattr(self, k, v)
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-        if not hasattr(self, "constants_path"):
-            self.constants_path = Path(self.path) / self.constants_file
+from .mock_args import MockArgs
 
 
 def test_global_extraction_flow(tmp_path):

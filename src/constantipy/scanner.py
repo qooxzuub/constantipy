@@ -4,7 +4,7 @@ AST Scanner logic for identifying magic literals in source code.
 
 import ast
 from pathlib import Path
-from typing import List, Dict, Set, Tuple, Union, Any
+from typing import List, Dict, Set, Tuple, Union, Optional, Any
 from constantipy.common import Config, REGEX_FUNCTIONS
 
 # Define types that can have docstrings
@@ -23,6 +23,7 @@ class CodebaseScanner(ast.NodeVisitor):
         self.top_level_names: Set[str] = set()
         self.ignore_depth = 0
         self.in_regex_context = False
+        self.current_assign_target: Optional[str] = None
 
     def _mark_docstring(self, node: DocstringNode) -> None:
         doc_node = ast.get_docstring(node, clean=False)
@@ -77,6 +78,16 @@ class CodebaseScanner(ast.NodeVisitor):
         """Visits a ClassDef node, marking its docstring."""
         self._mark_docstring(node)
         self.generic_visit(node)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        """Visits assignment to track potential constant definitions."""
+        old_target = self.current_assign_target
+        # Only track simple assignments: NAME = ...
+        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            self.current_assign_target = node.targets[0].id
+
+        self.generic_visit(node)
+        self.current_assign_target = old_target
 
     def visit_JoinedStr(self, node: ast.JoinedStr) -> None:
         """Visits f-strings. Currently ignores them to avoid complexity."""
@@ -134,6 +145,7 @@ class CodebaseScanner(ast.NodeVisitor):
                 "end_lineno": node.end_lineno,
                 "end_col_offset": node.end_col_offset,
                 "is_regex_arg": self.in_regex_context,
+                "definition_of": self.current_assign_target,
             }
         )
 
@@ -151,6 +163,7 @@ class CodebaseScanner(ast.NodeVisitor):
                 "col_offset": node.col_offset,
                 "end_lineno": node.end_lineno,
                 "end_col_offset": node.end_col_offset,
+                "definition_of": self.current_assign_target,
             }
         )
 
@@ -168,6 +181,7 @@ class CodebaseScanner(ast.NodeVisitor):
                 "col_offset": node.col_offset,
                 "end_lineno": node.end_lineno,
                 "end_col_offset": node.end_col_offset,
+                "definition_of": self.current_assign_target,
             }
         )
 
@@ -185,6 +199,7 @@ class CodebaseScanner(ast.NodeVisitor):
                 "col_offset": node.col_offset,
                 "end_lineno": node.end_lineno,
                 "end_col_offset": node.end_col_offset,
+                "definition_of": self.current_assign_target,
             }
         )
 
