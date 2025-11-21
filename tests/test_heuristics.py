@@ -1,4 +1,5 @@
 """Test heuristics module, for generating variable names"""
+
 import pytest
 from constantipy.heuristics import generate_name, determine_type_hint
 

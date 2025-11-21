@@ -1,4 +1,5 @@
 """Hypothesis-based tests for heiristics"""
+
 from hypothesis import given, strategies as st
 from constantipy.heuristics import generate_name
 

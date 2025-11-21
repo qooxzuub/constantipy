@@ -1,8 +1,10 @@
 """Test config from the common module"""
+
 import argparse
 import pytest
 from constantipy.common import Config
 from .mock_args import MockArgs
+
 
 def make_args(**kwargs):
     """

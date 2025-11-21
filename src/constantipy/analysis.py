@@ -108,7 +108,7 @@ class RefactoringSession:
             if base_name in existing_defs:
                 reserved.discard(base_name)
             final_name = self._resolve_collision(base_name, reserved)
-            
+
             # If the resolved name matches an existing definition in this file,
             # it is NOT new (it's already defined here).
             if final_name in existing_defs:
@@ -117,7 +117,7 @@ class RefactoringSession:
         self.name_tracker[final_name] += 1
         if is_new:
             self.idx += 1
-            
+
         return final_name, scope, source_path, is_new
 
     def _process_item(self, val: Any, occurrences: List[Dict]) -> None:
@@ -131,7 +131,9 @@ class RefactoringSession:
             source_path = str(entry["source"]) if entry["source"] else None
             is_new = False
         else:
-            final_name, scope, source_path, is_new = self._create_new_constant(val, occurrences)
+            final_name, scope, source_path, is_new = self._create_new_constant(
+                val, occurrences
+            )
 
         self.report[final_name] = {
             "value": val,

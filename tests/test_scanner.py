@@ -1,6 +1,7 @@
 """
 Unit tests for the scanner module.
 """
+
 from constantipy.scanner import scan_file
 from constantipy.common import Config
 from .mock_args import MockArgs

@@ -1,8 +1,9 @@
 """
 Unit tests for the refactor module.
 """
-from pathlib import Path
+
 from unittest import mock
+from pathlib import Path
 import pytest
 from constantipy.refactor import (
     process_report,
@@ -13,32 +14,31 @@ from constantipy.exceptions import ConstantipyError
 from constantipy.common import Config
 from .mock_args import MockArgs
 
-
 # --- Insertion Logic Tests ---
 
 
 def test_find_insertion_line_shebang():
-    """Check find_insertion_line copes with shebang"""
+    """Test insertion line calculation with a shebang present."""
     code = "#!/usr/bin/env python\nx = 1"
     assert find_insertion_line(code) == 1
 
 
 def test_find_insertion_line_imports():
-    """Check find_insertion_line copes with imports"""
+    """Test insertion line calculation with existing imports."""
     code = "import os\nimport sys\n\nx = 1"
     # Should insert after imports (line 2)
     assert find_insertion_line(code) == 2
 
 
 def test_find_insertion_line_docstring():
-    """Check find_insertion_line copes with a docstring then an import"""
+    """Test insertion line calculation with a docstring and imports."""
     code = '"""Docstring"""\nimport os'
     # Should be after import (line 2)
     assert find_insertion_line(code) == 2
 
 
 def test_find_insertion_line_docstring_only():
-    """Check find_insertion_line copes with a docstring only"""
+    """Test insertion line calculation with only a docstring."""
     code = '"""Docstring"""\n'
     # Should be after docstring (line 1)
     assert find_insertion_line(code) == 1
@@ -121,7 +121,14 @@ def test_process_report_append_newline(tmp_path, simple_report_maker):
     args = MockArgs(path=d)
     config = Config(args)
 
+    # Use fixture
     report = simple_report_maker(const_file, "NEW_CONST", "val")
+
+    # --- FIX: Ensure it is treated as global AND has no occurrences to refactor ---
+    report["NEW_CONST"]["scope"] = "global"
+    report["NEW_CONST"][
+        "occurrences"
+    ] = []  # Critical: Don't try to "replace" text in constants.py
 
     process_report(config, report, apply=True)
 

@@ -1,4 +1,5 @@
 """Integration tests"""
+
 from constantipy.common import Config
 from constantipy.analysis import analyze_codebase
 from constantipy.refactor import process_report

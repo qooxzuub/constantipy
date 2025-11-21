@@ -1,4 +1,5 @@
 """Tests for the loader module."""
+
 from constantipy.loader import load_all_constants
 
 
