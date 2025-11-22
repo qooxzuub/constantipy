@@ -8,7 +8,7 @@ import sys
 import pytest
 
 
-def pytest_configure(config):
+def pytest_configure(config):  # pylint: disable=unused-argument
     logging.basicConfig(
         stream=sys.stderr, level=logging.DEBUG, format="%(name)%(lineno)%(message)s"
     )
