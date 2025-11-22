@@ -4,9 +4,11 @@ This suite specifically targets regression cases like zombie imports and idempot
 """
 
 from unittest import mock
+
+from constantipy.cli import main
 from constantipy.common import Config
 from constantipy.refactor import process_report
-from constantipy.cli import main
+
 from .mock_args import MockArgs
 
 # --- 1. Diff & File Formatting Tests ---

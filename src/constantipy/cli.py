@@ -4,11 +4,12 @@ Constantipy: The magic removal tool.
 """
 import argparse
 import json
-import sys
 import os
-from constantipy.exceptions import ConstantipyError
-from constantipy.common import Config, eprint
+import sys
+
 from constantipy.analysis import analyze_codebase
+from constantipy.common import Config, eprint
+from constantipy.exceptions import ConstantipyError
 from constantipy.refactor import process_report
 
 

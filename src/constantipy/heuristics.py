@@ -2,9 +2,9 @@
 Heuristics for generating constant names from literal values.
 """
 
-import re
 import hashlib
-from typing import Union, Optional, Any
+import re
+from typing import Any, Optional, Union
 
 
 def split_camel_case(text: str) -> str:

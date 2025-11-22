@@ -1,11 +1,56 @@
 repos:
+  # 1. Standard "Sanity" Hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+
+  # 2. Import Sorting (isort)
+  - repo: https://github.com/pycqa/isort
+    rev: 7.0.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"] # Prevent conflicts with Black
+
+  # 3. Code Formatting (Black)
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
+    hooks:
+      - id: black
+
+  # 4. Local Tools (Linter, Tests, Generation)
+  # We use 'local' so they have access to your installed source code
   - repo: local
     hooks:
+      # Pylint
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        # Only run on files in src/
+        files: ^src/
+
+      # Pytest (Fast check)
+      # Only runs if python files change.
+      # NOTE: If your test suite takes >10s, you might want to remove this
+      # and leave testing to GitHub Actions (CI).
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # Your Shell Completion Generator
       - id: generate-completion
         name: Generate Shell Completions
         entry: env PYTHONPATH=src python3 scripts/generate_completions.py
-        language: python
-        additional_dependencies: [shtab]
-        # Trigger this hook when these files change
+        language: system
         files: ^(src/constantipy/cli\.py|scripts/generate_completions\.py)$
         pass_filenames: false

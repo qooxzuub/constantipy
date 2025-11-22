@@ -4,7 +4,9 @@ Generates shell completion scripts for Bash, Zsh, and Tcsh.
 Also generates a README.md with installation instructions.
 """
 from pathlib import Path
+
 import shtab
+
 from constantipy.cli import get_parser
 
 # Define output filenames
@@ -51,6 +53,11 @@ source /path/to/constantipy/completions/{tcsh_file}
 """
 
 
+def add_trailing_newline_if_absent(text):
+    """Return text with a trailing newline if it doesn't have one already"""
+    return text + ("" if text.endswith("\n") else "\n")
+
+
 def main():
     """Main"""
     print(f"Generating completions in {COMPLETIONS_DIR}...")
@@ -63,15 +70,15 @@ def main():
         print(f"  - {shell} -> {filename}")
 
         # shtab.complete generates the raw script content
-        content = shtab.complete(parser, shell=shell)
+        content = add_trailing_newline_if_absent(shtab.complete(parser, shell=shell))
         out_file.write_text(content, encoding="utf-8")
 
     # Generate README
     readme_path = COMPLETIONS_DIR / "README.md"
     print(f"  - Documentation -> {readme_path.name}")
 
-    readme_content = README_TEMPLATE.format(
-        bash_file=SHELL_MAP["bash"], tcsh_file=SHELL_MAP["tcsh"]
+    readme_content = add_trailing_newline_if_absent(
+        README_TEMPLATE.format(bash_file=SHELL_MAP["bash"], tcsh_file=SHELL_MAP["tcsh"])
     )
     readme_path.write_text(readme_content, encoding="utf-8")
 

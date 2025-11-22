@@ -1,8 +1,9 @@
 # pylint: disable=protected-access
 """Tests for the analysis module"""
 import argparse
-from constantipy.common import Config
+
 from constantipy.analysis import RefactoringSession
+from constantipy.common import Config
 
 
 def get_default_config():

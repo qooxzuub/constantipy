@@ -4,7 +4,7 @@ Logic for loading and parsing existing constants files.
 
 import ast
 from pathlib import Path
-from typing import Dict, Set, Tuple, Any, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 class ConstantLoader(ast.NodeVisitor):

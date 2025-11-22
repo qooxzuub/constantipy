@@ -1,6 +1,8 @@
 """Hypothesis-based tests for heiristics"""
 
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
+
 from constantipy.heuristics import generate_name
 
 # Strategy for text: anything except null bytes

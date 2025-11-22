@@ -5,7 +5,7 @@ Shared configuration, constants, and types for Constantipy.
 import argparse
 import sys
 from pathlib import Path
-from typing import Any, Set, Union, List
+from typing import Any, List, Set, Union
 
 IGNORED_DIRS = {
     ".git",

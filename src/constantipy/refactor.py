@@ -3,13 +3,14 @@ Logic for generating diffs and applying changes.
 """
 
 import ast
-import sys
 import difflib
+import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Dict, Tuple, Any, Set
-from constantipy.exceptions import ConstantipyError
+from typing import Any, Dict, List, Set, Tuple
+
 from constantipy.common import Config, eprint
+from constantipy.exceptions import ConstantipyError
 
 
 def get_import_module_path(file_path: str, root: Path) -> str:

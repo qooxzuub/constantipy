@@ -2,16 +2,19 @@
 Unit tests for the refactor module.
 """
 
-from unittest import mock
 from pathlib import Path
+from unittest import mock
+
 import pytest
+
+from constantipy.common import Config
+from constantipy.exceptions import ConstantipyError
 from constantipy.refactor import (
-    process_report,
     find_insertion_line,
     get_import_module_path,
+    process_report,
 )
-from constantipy.exceptions import ConstantipyError
-from constantipy.common import Config
+
 from .mock_args import MockArgs
 
 # --- Insertion Logic Tests ---

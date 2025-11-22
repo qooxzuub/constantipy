@@ -4,8 +4,9 @@ AST Scanner logic for identifying magic literals in source code.
 
 import ast
 from pathlib import Path
-from typing import List, Dict, Set, Tuple, Union, Optional, Any
-from constantipy.common import Config, REGEX_FUNCTIONS
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from constantipy.common import REGEX_FUNCTIONS, Config
 
 # Define types that can have docstrings
 DocstringNode = Union[ast.AsyncFunctionDef, ast.FunctionDef, ast.ClassDef, ast.Module]

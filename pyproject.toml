@@ -39,3 +39,24 @@ constantipy = "constantipy.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.pylint.messages_control]
+disable = [
+    # "C0114", # missing-module-docstring (optional, enable if you want strictness)
+    # "C0115", # missing-class-docstring
+    # "C0116", # missing-function-docstring
+    "R0903", # too-few-public-methods
+]
+
+[tool.pylint.format]
+max-line-length = 88

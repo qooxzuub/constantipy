@@ -5,11 +5,12 @@ Orchestration logic for scanning the codebase and generating the report.
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Any, Set, Tuple, List, Counter
+from typing import Any, Counter, Dict, List, Set, Tuple
+
 from constantipy.common import Config, eprint
+from constantipy.heuristics import determine_type_hint, generate_name
 from constantipy.loader import load_all_constants
 from constantipy.scanner import scan_file
-from constantipy.heuristics import generate_name, determine_type_hint
 
 
 class RefactoringSession:

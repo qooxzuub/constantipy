@@ -2,14 +2,17 @@
 Unit tests for the CLI module.
 """
 
-import sys
-import json
 import io
+import json
+import sys
 from unittest.mock import patch
+
 import pytest
-from constantipy.exceptions import ConstantipyError
-from constantipy.cli import main, handle_validate
+
+from constantipy.cli import handle_validate, main
 from constantipy.common import Config
+from constantipy.exceptions import ConstantipyError
+
 from .mock_args import MockArgs
 
 
