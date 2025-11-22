@@ -1,0 +1,11 @@
+repos:
+  - repo: local
+    hooks:
+      - id: generate-completion
+        name: Generate Shell Completions
+        entry: env PYTHONPATH=src python3 scripts/generate_completions.py
+        language: python
+        additional_dependencies: [shtab]
+        # Trigger this hook when these files change
+        files: ^(src/constantipy/cli\.py|scripts/generate_completions\.py)$
+        pass_filenames: false

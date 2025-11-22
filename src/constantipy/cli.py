@@ -62,13 +62,13 @@ def handle_refactor(config: Config, apply: bool = False) -> bool:
         return False
 
 
-def main() -> None:
+def get_parser() -> argparse.ArgumentParser:
     """
-    Main entry point for the Constantipy CLI.
-    Parses arguments and delegates to the run function.
+    Constructs and returns the argument parser.
+    Exposed for documentation and shell completion generation (shtab).
     """
     parser = argparse.ArgumentParser(
-        description="Constantipy: Find and refactor magic literals."
+        description="Constantipy: Find and refactor magic literals.", prog="constantipy"
     )
 
     # Global Arguments
@@ -149,16 +149,7 @@ def main() -> None:
     ref = sub.add_parser("refactor", help="Read report from stdin and output diff")
     ref.add_argument("--apply", action="store_true", help="Modify files")
 
-    args = parser.parse_args()
-    try:
-        config = Config(args)
-    except ValueError as exc:
-        raise ConstantipyError(f"Invalid configuration: {exc}") from exc
-
-    success = run(args, config)
-
-    if not success:
-        raise ConstantipyError("Run was not successful")
+    return parser
 
 
 def run(args: argparse.Namespace, config: Config) -> bool:
@@ -187,6 +178,25 @@ def run(args: argparse.Namespace, config: Config) -> bool:
     eprint("Analysis complete. Starting refactor...")
     process_report(config, report_data, apply=args.apply)
     return True
+
+
+def main() -> None:
+    """
+    Main entry point for the Constantipy CLI.
+    Parses arguments and delegates to the run function.
+    """
+    parser = get_parser()
+    args = parser.parse_args()
+
+    try:
+        config = Config(args)
+    except ValueError as exc:
+        raise ConstantipyError(f"Invalid configuration: {exc}") from exc
+
+    success = run(args, config)
+
+    if not success:
+        raise ConstantipyError("Run was not successful")
 
 
 if __name__ == "__main__":
