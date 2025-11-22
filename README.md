@@ -120,26 +120,28 @@ You can fine-tune the extraction process using command-line flags:
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
-| `--path DIR` | Root directory to scan | `.` |
-| `--constants-file` | Name of the global constants file | `constants.py` |
-| `--min-count N` | Only extract literals appearing N times | `2` |
-| `--min-length N` | Only extract strings longer than N chars | `4` |
-| `--naming` | Naming strategy (`derived` or `generic`) | `derived` |
-| `--no-local-scope` | Force all constants to `constants.py` | `False` |
-| `--ignore-call F` | Ignore args to function `F` (e.g. `logging.debug`) | none |
-| `--exclude DIR` | Ignore specific directory names (e.g. `tests`) | none |
+| `--apply` | Apply detected changes to files (direct mode only) | False |
+| `--constants-file` | File name for storing global constants | `constants.py` |
+| `--exclude` | Directories to exclude | None |
+| `--extra-constants` | Additional Python files to scan for constants | None |
+| `--ignore-call` | Ignore specific function calls during scanning | None |
+| `--min-count` | Minimum occurrences for a constant to be considered | `2` |
+| `--min-length` | Minimum length for string literals | `4` |
+| `--naming {generic,derived}` | Strategy for naming generated constants | `derived` |
+| `--no-local-scope` | Force all constants to be global (ignore local scope) | False |
+| `--path` | Path to scan or refactor (default: current directory) | `.` |
 
 ### Numeric & Type Controls
 
 | Flag | Description |
 | :--- | :--- |
-| `--no-numbers` | Disable ALL magic number extraction |
-| `--no-ints` | Ignore all integers |
-| `--no-floats` | Ignore all floating point numbers |
-| `--no-bytes` | Ignore all byte literals |
 | `--ignore-num X` | Explicitly ignore number X (e.g. `--ignore-num 42`) |
-| `--include-num X` | Explicitly extract number X (overrides default ignore) |
 | `--ignore-str S` | Explicitly ignore string S (e.g. `--ignore-str "foo"`) |
+| `--include-num X` | Explicitly extract number X (overrides default ignore) |
+| `--no-bytes` | Skip bytes scanning |
+| `--no-floats` | Skip float scanning |
+| `--no-ints` | Skip integer scanning |
+| `--no-numbers` | Disable ALL magic number extraction |
 
 ## Safety Warning ⚠️
 
