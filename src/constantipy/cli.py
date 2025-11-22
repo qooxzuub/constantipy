@@ -4,13 +4,17 @@ Constantipy: The magic removal tool.
 """
 import argparse
 import json
+import logging
 import os
 import sys
 
 from constantipy.analysis import analyze_codebase
+from constantipy.args import get_parser
 from constantipy.common import Config, eprint
 from constantipy.exceptions import ConstantipyError
 from constantipy.refactor import process_report
+
+logger = logging.getLogger("constantipy")
 
 
 def handle_validate(config: Config) -> bool:
@@ -63,96 +67,6 @@ def handle_refactor(config: Config, apply: bool = False) -> bool:
         return False
 
 
-def get_parser() -> argparse.ArgumentParser:
-    """
-    Constructs and returns the argument parser.
-    Exposed for documentation and shell completion generation (shtab).
-    """
-    parser = argparse.ArgumentParser(
-        description="Constantipy: Find and refactor magic literals.", prog="constantipy"
-    )
-
-    # Global Arguments
-    parser.add_argument(
-        "--path",
-        default=".",
-        help="Path to scan/refactor (default: current directory)",
-    )
-    parser.add_argument(
-        "--constants-file",
-        default="constants.py",
-        help="Name of the file to store global constants",
-    )
-    parser.add_argument(
-        "--min-length",
-        type=int,
-        default=4,
-        help="Minimum length for string literals (default: 4)",
-    )
-    parser.add_argument(
-        "--min-count",
-        type=int,
-        default=2,
-        help="Minimum occurrences to be considered (default: 2)",
-    )
-    parser.add_argument(
-        "--no-local-scope",
-        action="store_true",
-        help="Force all constants to be global",
-    )
-    parser.add_argument(
-        "--report-file",
-        default="constantipy_report.json",
-        help="File used for validate/report",
-    )
-
-    # Filter/Ignore Arguments
-    parser.add_argument(
-        "--ignore-call", action="append", help="Ignore arguments inside specific calls"
-    )
-    parser.add_argument("--exclude", action="append", help="Exclude directories")
-    parser.add_argument("--ignore-num", action="append", help="Ignore specific numbers")
-    parser.add_argument(
-        "--include-num", action="append", help="Include specific numbers (un-ignore)"
-    )
-    parser.add_argument("--ignore-str", action="append", help="Ignore specific strings")
-
-    # Types
-    parser.add_argument("--no-numbers", action="store_true", help="Do not scan numbers")
-    parser.add_argument("--no-ints", action="store_true", help="Do not scan integers")
-    parser.add_argument("--no-floats", action="store_true", help="Do not scan floats")
-    parser.add_argument("--no-bytes", action="store_true", help="Do not scan bytes")
-
-    parser.add_argument(
-        "--naming",
-        choices=["derived", "generic"],
-        default="derived",
-        help="Naming strategy",
-    )
-    parser.add_argument("--extra-constants", nargs="*")
-
-    # For the implicit flow
-    parser.add_argument(
-        "--apply", action="store_true", help="Apply changes (files are modified)"
-    )
-
-    # Subcommands
-    sub = parser.add_subparsers(dest="command")
-
-    # Report (Output JSON to stdout)
-    sub.add_parser("report", help="Generate JSON report to stdout")
-
-    # Validate (Validate file)
-    val = sub.add_parser("validate", help="Validate a report file")
-    val.add_argument("--report-file", required=True)
-
-    # Refactor (Input JSON from stdin -> Output diff or Apply)
-    ref = sub.add_parser("refactor", help="Read report from stdin and output diff")
-    ref.add_argument("--apply", action="store_true", help="Modify files")
-
-    return parser
-
-
 def run(args: argparse.Namespace, config: Config) -> bool:
     """
     Executes the logic corresponding to the parsed CLI arguments.
@@ -186,8 +100,21 @@ def main() -> None:
     Main entry point for the Constantipy CLI.
     Parses arguments and delegates to the run function.
     """
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="[{levelname}] {message}",
+        style="{",
+    )
+
+    for i, arg in enumerate(sys.argv):
+        logging.debug("<<<<< ARGV[{%s}]: {%s}", i, arg)
+
     parser = get_parser()
     args = parser.parse_args()
+    # logging.debug(">>>>> ARGS: {%s}", args)
+    logger.debug("vars(args)=%s", vars(args))
+    logger.debug("Effective scan path: %s", args.path)
 
     try:
         config = Config(args)

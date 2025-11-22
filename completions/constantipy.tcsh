@@ -2,7 +2,7 @@
 
 
 
-complete constantipy \
+complete generate_completions.py \
         'c/--/(apply constants-file exclude extra-constants help ignore-call ignore-num ignore-str include-num min-count min-length naming no-bytes no-floats no-ints no-local-scope no-numbers path report-file)/' \
         'c/-/(- h)/' \
         'n/--naming/(derived generic)/' \

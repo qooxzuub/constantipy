@@ -3,9 +3,12 @@ Shared configuration, constants, and types for Constantipy.
 """
 
 import argparse
-import sys
+import logging
 from pathlib import Path
 from typing import Any, List, Set, Union
+
+logger = logging.getLogger("constantipy")
+
 
 IGNORED_DIRS = {
     ".git",
@@ -39,9 +42,11 @@ REGEX_FUNCTIONS = {
 TRIVIAL_NUMBERS: Set[Union[int, float]] = {0, 1, 2, -1}
 
 
-def eprint(*args: Any, **kwargs: Any) -> None:
+def eprint(*args: Any, **_kwargs: Any) -> None:
     """Prints to stderr to avoid polluting stdout (which is used for piping)."""
-    print(*args, file=sys.stderr, **kwargs)
+    # print(*args, file=sys.stderr, **kwargs)
+    msg = " ".join(str(a) for a in args)
+    logger.error(msg)
 
 
 class Config:

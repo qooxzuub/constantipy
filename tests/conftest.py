@@ -2,7 +2,16 @@
 Shared Pytest fixtures for Constantipy tests.
 """
 
+import logging
+import sys
+
 import pytest
+
+
+def pytest_configure(config):
+    logging.basicConfig(
+        stream=sys.stderr, level=logging.DEBUG, format="%(name)%(lineno)%(message)s"
+    )
 
 
 @pytest.fixture

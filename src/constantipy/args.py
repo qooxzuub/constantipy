@@ -1,28 +1,32 @@
 """
-Argument parsing
+Argument parsing for Constantipy.
+
+Global options work anywhere in the CLI. Subcommands are optional,
+with a default direct mode when no command is specified.
 """
 
 import argparse
 
 
-def _create_config_parent() -> argparse.ArgumentParser:
+def _create_global_parser() -> argparse.ArgumentParser:
     """
-    Creates a parent parser containing all configuration arguments.
-    This allows these arguments to be shared between the main entry point
-    and subcommands like 'refactor' and 'report'.
+    Creates a parser with all global options.
+
+    This parser is used as the parent for subcommands to inherit
+    global options without duplicating them.
     """
     parser = argparse.ArgumentParser(add_help=False)
 
-    # Global Arguments
+    # Base configuration
     parser.add_argument(
         "--path",
         default=".",
-        help="Path to scan/refactor (default: current directory)",
+        help="Path to scan or refactor (default: current directory)",
     )
     parser.add_argument(
         "--constants-file",
         default="constants.py",
-        help="Name of the file to store global constants",
+        help="File name for storing global constants",
     )
     parser.add_argument(
         "--min-length",
@@ -34,129 +38,137 @@ def _create_config_parent() -> argparse.ArgumentParser:
         "--min-count",
         type=int,
         default=2,
-        help="Minimum occurrences to be considered (default: 2)",
+        help="Minimum occurrences for a constant to be considered (default: 2)",
     )
     parser.add_argument(
         "--no-local-scope",
         action="store_true",
-        help="Force all constants to be global",
+        help="Force all constants to be global (ignore local scope)",
     )
+
+    # Filtering and exclusion
     parser.add_argument(
-        "--report-file",
-        default="constantipy_report.json",
-        help="File used for validate/report",
+        "--ignore-call",
+        action="append",
+        help="Ignore specific function calls during scanning",
     )
+    parser.add_argument("--exclude", action="append", help="Directories to exclude")
+    parser.add_argument("--ignore-num", action="append", help="Numbers to ignore")
+    parser.add_argument(
+        "--include-num", action="append", help="Numbers to include (un-ignore)"
+    )
+    parser.add_argument("--ignore-str", action="append", help="Strings to ignore")
 
-    # Filter/Ignore Arguments
-    filter_group = parser.add_argument_group("Filtering & Exclusion")
-    filter_group.add_argument(
-        "--ignore-call", action="append", help="Ignore arguments inside specific calls"
+    # Type-specific scanning
+    parser.add_argument(
+        "--no-numbers", action="store_true", help="Skip number scanning"
     )
-    filter_group.add_argument("--exclude", action="append", help="Exclude directories")
-    filter_group.add_argument(
-        "--ignore-num", action="append", help="Ignore specific numbers"
-    )
-    filter_group.add_argument(
-        "--include-num", action="append", help="Include specific numbers (un-ignore)"
-    )
-    filter_group.add_argument(
-        "--ignore-str", action="append", help="Ignore specific strings"
-    )
+    parser.add_argument("--no-ints", action="store_true", help="Skip integer scanning")
+    parser.add_argument("--no-floats", action="store_true", help="Skip float scanning")
+    parser.add_argument("--no-bytes", action="store_true", help="Skip bytes scanning")
 
-    # Types
-    type_group = parser.add_argument_group("Type Selection")
-    type_group.add_argument(
-        "--no-numbers", action="store_true", help="Do not scan numbers"
-    )
-    type_group.add_argument(
-        "--no-ints", action="store_true", help="Do not scan integers"
-    )
-    type_group.add_argument(
-        "--no-floats", action="store_true", help="Do not scan floats"
-    )
-    type_group.add_argument("--no-bytes", action="store_true", help="Do not scan bytes")
-
+    # Naming strategy
     parser.add_argument(
         "--naming",
         choices=["derived", "generic"],
         default="derived",
-        help="Naming strategy",
+        help="Strategy for naming generated constants",
     )
-    parser.add_argument("--extra-constants", nargs="*")
+
+    # Extra files containing constants
+    parser.add_argument(
+        "--extra-constants",
+        nargs="*",
+        help="Additional Python files to scan for constants",
+    )
 
     return parser
 
 
 def get_parser() -> argparse.ArgumentParser:
     """
-    Constructs and returns the argument parser.
+    Returns the main CLI parser.
 
-    - Global options are valid anywhere.
-    - Commands are optional; default mode runs when no command is given.
+    Option 2 semantics:
+      - Global options work anywhere (before or after a subcommand)
+      - Subcommands are optional
+      - Default direct mode runs if no command is given
     """
-    # Parent parser containing all global options
-    config_parent = _create_config_parent()
+    global_parser = _create_global_parser()
 
     description = """
 Constantipy: Find and refactor magic literals.
 
 MODES OF OPERATION:
-  1. Direct Mode (Default):
-     Run without a command to scan the path and preview changes.
-     Use --apply to modify files in place.
 
-     $ constantipy --path src/
-     $ constantipy --path src/ --apply
+1. Direct Mode (Default):
+   Run without a command to scan the path and preview changes.
+   Use --apply to modify files in place.
 
-  2. Pipeline Mode (Advanced):
-     Use subcommands to generate, validate, and process JSON reports.
+   Example:
+       $ constantipy --path src/
+       $ constantipy --path src/ --apply
+
+2. Pipeline Mode (Advanced):
+   Use subcommands to generate, validate, and process JSON reports.
 """
 
     parser = argparse.ArgumentParser(
         description=description,
-        prog="constantipy",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=[config_parent],
-        usage="%(prog)s [options] [COMMAND]",
+        parents=[global_parser],
+        usage="%(prog)s [OPTIONS] [COMMAND [COMMAND_OPTIONS]]",
     )
 
-    # Only meaningful in implicit/direct mode
+    # Apply changes in direct mode
     parser.add_argument(
-        "--apply", action="store_true", help="Apply changes (files are modified)"
+        "--apply",
+        action="store_true",
+        help="Apply detected changes to files (direct mode only)",
     )
 
-    # Subparsers for advanced pipeline commands
+    # Subparsers for pipeline commands
     sub = parser.add_subparsers(
         dest="command",
-        title="Advanced Pipeline Commands",
-        description="Optional commands for CI/CD workflows.",
+        title="Pipeline Commands",
+        description="Advanced commands for CI/CD workflows",
         metavar="COMMAND",
         required=False,
     )
 
-    # REPORT command
+    # REPORT subcommand
     sub.add_parser(
         "report",
-        help="Generate JSON report to stdout",
-        parents=[config_parent],
-        usage="%(prog)s report [options]",
+        help="Generate JSON report of constants to stdout",
+        parents=[],  # Do not re-include global options to prevent conflicts
+        usage="%(prog)s report [OPTIONS]",
     )
 
-    # VALIDATE command
-    sub.add_parser(
+    # VALIDATE subcommand
+    validate = sub.add_parser(
         "validate",
-        help="Validate a report file",
-        parents=[config_parent],  # inherits --report-file
-        usage="%(prog)s validate [options]",
+        help="Validate an existing JSON report file",
+        parents=[],  # Global options not needed for validate
+        usage="%(prog)s validate [OPTIONS]",
+    )
+    validate.add_argument(
+        "--report-file",
+        default="constantipy_report.json",
+        required=True,
+        help="Path to the report file to validate",
     )
 
-    # REFACTOR command
-    ref = sub.add_parser(
+    # REFACTOR subcommand
+    refactor = sub.add_parser(
         "refactor",
-        help="Read report from stdin and output diff",
-        parents=[config_parent],
-        usage="%(prog)s refactor [options]",
+        help="Read JSON report from stdin and apply refactoring",
+        parents=[],  # Use direct mode globals only if needed
+        usage="%(prog)s refactor [OPTIONS]",
     )
-    ref.add_argument("--apply", action="store_true", help="Modify files")
+    refactor.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply detected changes to files",
+    )
 
     return parser
