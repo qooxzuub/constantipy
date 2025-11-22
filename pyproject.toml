@@ -60,3 +60,26 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
+
+# -----------------------------
+# Pylint relaxed rules for tests/
+# -----------------------------
+[tool.pylint."tests/.*"]
+disable = [
+    "missing-function-docstring",
+    "missing-class-docstring",
+    "missing-module-docstring",
+
+    # Tests often use many locals, args, or statements
+    "too-many-locals",
+    "too-many-arguments",
+    "too-many-statements",
+
+    # tests often use assert directly, dynamic attributes, etc.
+    "protected-access",
+    "invalid-name",
+]
+max-line-length = 160
+
+# Optional: sometimes useful for test helpers
+extension-pkg-whitelist = []

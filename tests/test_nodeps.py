@@ -1,62 +1,57 @@
+import ast
 import importlib.util
-import sys
 import sysconfig
 from pathlib import Path
 
-import pytest
+# Whitelist your own package
+WHITELIST = {"constantipy"}
+
+# Path to your project source code
+PROJECT_PACKAGE_PATH = "src/constantipy"
 
 
 def _is_stdlib_module(module_name: str) -> bool:
-    """
-    Returns True if `module_name` is part of the Python standard library.
-    """
-    try:
-        spec = importlib.util.find_spec(module_name)
-        if spec is None or spec.origin is None:
-            return False
-        # Standard library is usually under sysconfig.get_paths()["stdlib"]
-        stdlib_path = Path(sysconfig.get_paths()["stdlib"]).resolve()
-        return Path(spec.origin).resolve().is_relative_to(stdlib_path)
-    except Exception:
+    """Return True if the module is part of the standard library or whitelisted."""
+    if module_name in WHITELIST:
+        return True
+    spec = importlib.util.find_spec(module_name)
+    if spec is None:
         return False
+    if spec.origin in (None, "built-in", "frozen"):
+        return True
+    stdlib_path = Path(sysconfig.get_paths()["stdlib"]).resolve()
+    return Path(spec.origin).resolve().is_relative_to(stdlib_path)
 
 
-def _get_project_modules(package_name: str) -> list[str]:
-    """
-    Return all top-level modules in the project package.
-    """
-    pkg = __import__(package_name)
-    if hasattr(pkg, "__path__"):
-        paths = list(pkg.__path__)
-    else:
-        paths = []
-    modules = []
-    for path in paths:
-        for file in Path(path).rglob("*.py"):
-            relative = file.relative_to(path)
-            module = ".".join(relative.with_suffix("").parts)
-            modules.append(module)
-    return modules
+def _get_py_files(package_path: str):
+    """Yield all Python files in the package."""
+    return Path(package_path).rglob("*.py")
+
+
+def _find_imports_in_file(py_file: Path):
+    """Return all top-level imports in a Python file."""
+    with py_file.open("r", encoding="utf-8") as f:
+        tree = ast.parse(f.read(), filename=str(py_file))
+    imports = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports.add(alias.name.split(".")[0])
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                imports.add(node.module.split(".")[0])
+    return imports
 
 
 def test_no_nonstdlib_dependencies():
-    """
-    Ensure the project does not import modules outside the Python standard library.
-    """
-    project_package = "constantipy"  # change to your package name
-    project_modules = _get_project_modules(project_package)
+    """Fail if any non-stdlib imports exist, reporting the file and offending module."""
+    offending = []
 
-    non_stdlib_imports = set()
-    for mod in project_modules:
-        try:
-            imported = __import__(mod)
-            for name, submod in vars(imported).items():
-                if isinstance(submod, type(sys)):
-                    if not _is_stdlib_module(submod.__name__):
-                        non_stdlib_imports.add(submod.__name__)
-        except Exception:
-            continue
+    for py_file in _get_py_files(PROJECT_PACKAGE_PATH):
+        for mod in _find_imports_in_file(py_file):
+            if not _is_stdlib_module(mod):
+                offending.append((py_file, mod))
 
-    assert (
-        not non_stdlib_imports
-    ), f"Non-stdlib dependencies found: {non_stdlib_imports}"
+    assert not offending, "Non-stdlib dependencies found:\n" + "\n".join(
+        f" - {file}: {mod}" for file, mod in offending
+    )

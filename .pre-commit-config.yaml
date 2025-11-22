@@ -22,6 +22,7 @@ repos:
     rev: 25.11.0
     hooks:
       - id: black
+        args: ["--config=pyproject.toml"]
 
   # 4. Local Tools (Linter, Tests, Generation)
   # We use 'local' so they have access to your installed source code
@@ -33,8 +34,9 @@ repos:
         entry: pylint
         language: system
         types: [python]
+        args: ["--rcfile=pyproject.toml"]
         # Only run on files in src/
-        files: ^src/
+        # files: ^src/
 
       # Pytest (Fast check)
       # Only runs if python files change.

@@ -28,4 +28,3 @@ Source the script in your `~/.tcshrc` or `~/.cshrc`:
 ```tcsh
 source /path/to/constantipy/completions/constantipy.tcsh
 ```
-

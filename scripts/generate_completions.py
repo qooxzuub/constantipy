@@ -53,9 +53,11 @@ source /path/to/constantipy/completions/{tcsh_file}
 """
 
 
-def add_trailing_newline_if_absent(text):
-    """Return text with a trailing newline if it doesn't have one already"""
-    return text + ("" if text.endswith("\n") else "\n")
+def force_one_trailing_newline(text):
+    """Return input with all trailing newline deleted, and one added"""
+    while text.endswith("\n"):
+        text = text[:-1]
+    return text + "\n"
 
 
 def main():
@@ -70,14 +72,14 @@ def main():
         print(f"  - {shell} -> {filename}")
 
         # shtab.complete generates the raw script content
-        content = add_trailing_newline_if_absent(shtab.complete(parser, shell=shell))
+        content = force_one_trailing_newline(shtab.complete(parser, shell=shell))
         out_file.write_text(content, encoding="utf-8")
 
     # Generate README
     readme_path = COMPLETIONS_DIR / "README.md"
     print(f"  - Documentation -> {readme_path.name}")
 
-    readme_content = add_trailing_newline_if_absent(
+    readme_content = force_one_trailing_newline(
         README_TEMPLATE.format(bash_file=SHELL_MAP["bash"], tcsh_file=SHELL_MAP["tcsh"])
     )
     readme_path.write_text(readme_content, encoding="utf-8")
