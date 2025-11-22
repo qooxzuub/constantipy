@@ -10,6 +10,15 @@ WHITELIST = {"constantipy"}
 PROJECT_PACKAGE_PATH = "src/constantipy"
 
 
+def is_relative_to(path: Path, other: Path) -> bool:
+    """Helper needed for Python 3.8 compatibility"""
+    try:
+        path.relative_to(other)
+        return True
+    except ValueError:
+        return False
+
+
 def _is_stdlib_module(module_name: str) -> bool:
     """Return True if the module is part of the standard library or whitelisted."""
     if module_name in WHITELIST:
@@ -20,7 +29,7 @@ def _is_stdlib_module(module_name: str) -> bool:
     if spec.origin in (None, "built-in", "frozen"):
         return True
     stdlib_path = Path(sysconfig.get_paths()["stdlib"]).resolve()
-    return Path(spec.origin).resolve().is_relative_to(stdlib_path)
+    return is_relative_to(Path(spec.origin).resolve(), stdlib_path)
 
 
 def _get_py_files(package_path: str):
